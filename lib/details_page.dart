@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:notes/Models/note_mode.dart';
 import 'package:notes/home.dart';
 
 class DetailsPage extends StatelessWidget {
   const DetailsPage({super.key, required this.note});
 
-  final Note note;
+  final NoteModel note;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class NoteDetailsCol extends StatelessWidget {
     required this.note,
   });
 
-  final Note note;
+  final NoteModel note;
   final FlutterTts flutterTts = FlutterTts();
 
   @override
@@ -45,7 +46,7 @@ class NoteDetailsCol extends StatelessWidget {
         ),
         const Text('Matallah Abdallah'),
         Text(
-          note.note,
+          note.description,
           style: const TextStyle(fontSize: 20),
         ),
         Text(
@@ -54,7 +55,7 @@ class NoteDetailsCol extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () {
-            flutterTts.speak(note.note);
+            flutterTts.speak(note.description);
           },
           child: Text('Speak'),
         ),
