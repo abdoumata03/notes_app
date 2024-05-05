@@ -6,14 +6,17 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class SqfliteDB {
-
-
   static final _databaseName = "MyDatabase.db";
   static final _databaseVersion = 1;
   // only have a single app-wide reference to the database
+
+  static final SqfliteDB instance = SqfliteDB._init();
+
   static Database? _database;
+
+  SqfliteDB._init();
+
   Future<Database> get database async => _database ??= await _initDatabase();
- 
 
   _initDatabase() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
@@ -21,7 +24,7 @@ class SqfliteDB {
     return await openDatabase(path,
         version: _databaseVersion, onCreate: _onCreate);
   }
-
+  
   void _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE notes (
@@ -42,10 +45,9 @@ class SqfliteDB {
     List<Map> maps = await db.query('notes');
     return List.generate(maps.length, (i) {
       return NoteModel(
-        id: maps[i]['id'],
-        description: maps[i]['description'],
-        date: DateTime.now().toString()
-      );
+          id: maps[i]['id'],
+          description: maps[i]['description'],
+          date: DateTime.now().toString());
     });
   }
 

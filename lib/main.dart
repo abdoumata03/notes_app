@@ -30,9 +30,9 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          colorSchemeSeed: Colors.lightBlue,
+          colorSchemeSeed: Colors.yellow[600],
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.blue[100],
+            backgroundColor: Colors.yellow[600],
           )),
       home: _showSplash ? SplashScreen() : HomeScreen(),
     );

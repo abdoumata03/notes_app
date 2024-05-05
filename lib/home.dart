@@ -12,31 +12,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _noteController = TextEditingController();
-  final dbService = SqfliteDB();
 
-  List<Note> _notes = [];
-  List<NoteModel> _dbNotes = [];
+  late List<NoteModel> _dbNotes;
   int _selectedIndex = 0;
+  final dbService = SqfliteDB.instance;
+  bool isLoading = false;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     updateNotes();
   }
 
   void updateNotes() async {
-    _dbNotes = await dbService.getNotes();
-    for (var note in _dbNotes) {
-      print(note.toJson());
-    }
+    setState(() => isLoading = true);
+    _dbNotes = await SqfliteDB.instance.getNotes();
+    setState(() => isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion(
       value: SystemUiOverlayStyle(
-        statusBarColor: Colors.blue[100],
+        statusBarColor: Colors.yellow[600],
         statusBarIconBrightness: Brightness.dark,
       ),
       child: SafeArea(
@@ -81,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _noteController.clear();
                             updateNotes();
                           });
-                   
+
                           Navigator.of(context).pop();
                         },
                       ),
@@ -92,113 +90,120 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: const Icon(Icons.add_circle_outline_outlined),
           ),
-          body: _dbNotes.length == 0
-              ? const Center(
-                  child: Text(""),
-                )
-              : OrientationBuilder(builder: (context, orientation) {
-                  final isLandscape = orientation == Orientation.landscape;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 25, horizontal: 30),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Center(
-                                  child: ListView.separated(
-                                shrinkWrap: true,
-                                itemCount: _dbNotes.length,
-                                separatorBuilder:
-                                    (BuildContext context, int index) {
-                                  return const Divider();
-                                },
-                                itemBuilder: (BuildContext context, int index) {
-                                  return Container(
-                                    width: 100,
-                                    child: ListTile(
-                                      onTap: () {
-                                        if (isLandscape) {
-                                          setState(() {
-                                            _selectedIndex = index;
-                                          });
-                                          return;
-                                        }
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => DetailsPage(
-                                                note: _dbNotes[index]),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _dbNotes.length == 0
+                  ? const Center(
+                      child: Text(""),
+                    )
+                  : OrientationBuilder(builder: (context, orientation) {
+                      final isLandscape = orientation == Orientation.landscape;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 25, horizontal: 30),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Center(
+                                      child: ListView.separated(
+                                    shrinkWrap: true,
+                                    itemCount: _dbNotes.length,
+                                    separatorBuilder:
+                                        (BuildContext context, int index) {
+                                      return const Divider();
+                                    },
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return Container(
+                                        width: 100,
+                                        child: ListTile(
+                                          onTap: () {
+                                            if (isLandscape) {
+                                              setState(() {
+                                                _selectedIndex = index;
+                                              });
+                                              return;
+                                            }
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    DetailsPage(
+                                                        note: _dbNotes[index]),
+                                              ),
+                                            );
+                                          },
+                                          onLongPress: () {
+                                            showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                        'Delete Note'),
+                                                    content: const Text(
+                                                        'Are you sure you want to delete this note?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        child:
+                                                            const Text('Yes'),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _selectedIndex = 0;
+                                                            dbService.delete(
+                                                                _dbNotes[index]
+                                                                    .id!);
+                                                            updateNotes();
+                                                          });
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                      TextButton(
+                                                        child: const Text('No'),
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        },
+                                                      ),
+                                                    ],
+                                                  );
+                                                });
+                                          },
+                                          leading: const CircleAvatar(
+                                            backgroundImage:
+                                                AssetImage('assets/avatar.png'),
                                           ),
-                                        );
-                                      },
-                                      onLongPress: () {
-                                        showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title:
-                                                    const Text('Delete Note'),
-                                                content: const Text(
-                                                    'Are you sure you want to delete this note?'),
-                                                actions: [
-                                                  TextButton(
-                                                    child: const Text('Yes'),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        _selectedIndex = 0;
-                                                        dbService.delete(
-                                                            _dbNotes[index].id!);
-                                                        updateNotes();
-                                                      });
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                  ),
-                                                  TextButton(
-                                                    child: const Text('No'),
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                  ),
-                                                ],
-                                              );
-                                            });
-                                      },
-                                      leading: const CircleAvatar(
-                                        backgroundImage:
-                                            AssetImage('assets/avatar.png'),
-                                      ),
-                                      title: const Text(
-                                        'Abdallah',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        _dbNotes[index].description,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )),
-                            ],
-                          ),
+                                          title: const Text(
+                                            'Abdallah',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                            _dbNotes[index].description,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )),
+                                ],
+                              ),
+                            ),
+                            Visibility(
+                                visible: isLandscape,
+                                child: Expanded(
+                                    flex: 2,
+                                    child: NoteDetailsCol(
+                                        note: _dbNotes[_selectedIndex])))
+                          ],
                         ),
-                        Visibility(
-                            visible: isLandscape,
-                            child: Expanded(
-                                flex: 2,
-                                child: NoteDetailsCol(
-                                    note: _dbNotes[_selectedIndex])))
-                      ],
-                    ),
-                  );
-                }),
+                      );
+                    }),
         ),
       ),
     );
